@@ -13,7 +13,7 @@ namespace b64 {
 
     /**
      * @param inLength The length of the input string.
-     * @return The size of the buffer needed to decode a string of this length.
+     * @return The size of the buffer needed to decode a string of this length (excluding terminating '\0').
      */
     inline constexpr unsigned int decodedLength(unsigned int inLength) {
         return (3 * inLength) / 4;
@@ -36,7 +36,7 @@ namespace b64 {
     /**
      * @param data The data to be encoded.
      * @param length The length of the data to be encoded.
-     * @param out The string to copy the results into.
+     * @param out The string to copy the results into. Does not output a terminating '\0'.
      * @return Returns `true` on success.
      */
     bool encode(const void * data, size_t length, char * out);
@@ -44,7 +44,7 @@ namespace b64 {
     /**
      * @param b64String The base64 encoded string to be decoded.
      * @param length The length of the string to be decoded.
-     * @param out The buffer to copy the results into.
+     * @param out The buffer to copy the results into. Does not output a terminating '\0'.
      * @return Returns `true` on success.
      */
     bool decode(const char * b64String, size_t length, void * out);

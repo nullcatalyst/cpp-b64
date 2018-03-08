@@ -30,6 +30,7 @@ namespace b64 {
         char * out = (char *) malloc(outLength + 1); // +1 for terminating '\0' byte
 
         if (encode(data, length, out)) {
+            out[outLength] = '\0';
             return out;
         } else {
             free(out);
@@ -52,6 +53,7 @@ namespace b64 {
         unsigned char * out = (unsigned char *) malloc(outLength + 1); // +1 for terminating '\0' byte
 
         if (decode(b64String, length, out)) {
+            out[outLength] = '\0';
             return out;
         } else {
             free(out);
@@ -86,7 +88,7 @@ namespace b64 {
 
         switch (remaining) {
             case 0:
-                out[i] = '\0';
+                // out[i] = '\0';
                 break;
 
             case 1: {
@@ -95,7 +97,7 @@ namespace b64 {
                 out[i++] = table[((a & 0x03) << 4)];
                 out[i++] = '=';
                 out[i++] = '=';
-                out[i] = '\0';
+                // out[i] = '\0';
                 break;
             }
 
@@ -106,7 +108,7 @@ namespace b64 {
                 out[i++] = table[((a & 0x03) << 4) | (b >> 4)];
                 out[i++] = table[((b & 0x0f) << 2)];
                 out[i++] = '=';
-                out[i] = '\0';
+                // out[i] = '\0';
                 break;
             }
         }
@@ -150,7 +152,7 @@ namespace b64 {
 
 #undef checkBounds
 
-        buffer[i] = '\0';
+        // buffer[i] = '\0';
         return true;
     }
 }
