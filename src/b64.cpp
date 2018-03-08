@@ -5,24 +5,7 @@
 
 namespace b64 {
     namespace {
-        constexpr const char table[] = {
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-            'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-            'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-            'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
-            'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-            'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-            'w', 'x', 'y', 'z', '0', '1', '2', '3',
-            '4', '5', '6', '7', '8', '9', '+', '/'
-        };
-
-        inline constexpr unsigned int encodedLength(unsigned int inLength) {
-            return 4 * ((inLength + 2) / 3); // 4 * ceil(inLength / 3)
-        }
-
-        inline constexpr unsigned int decodedLength(unsigned int inLength) {
-            return (3 * inLength) / 4;
-        }
+        constexpr const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
         inline constexpr int toInt(unsigned int c) {
             if ((c >= 'A') && (c <= 'Z')) return (c - 'A') + 0;   // Upper Case  >>  0-25
@@ -35,6 +18,7 @@ namespace b64 {
         }
     }
 
+
     /**
      * @param data The data to be encoded.
      * @param length The length of the data to be encoded.
@@ -44,6 +28,46 @@ namespace b64 {
         const unsigned char * in = (const unsigned char *) data;
         const unsigned int outLength = encodedLength(length);
         char * out = (char *) malloc(outLength + 1); // +1 for terminating '\0' byte
+
+        if (encode(data, length, out)) {
+            return out;
+        } else {
+            free(out);
+            return nullptr;
+        }
+    }
+
+    /**
+     * @param b64String The base64 encoded string to be decoded.
+     * @param length The length of the string to be decoded.
+     * @return An array of bytes, which must be freed using `free()`.
+     */
+    void * decode(const char * b64String, size_t length) {
+        if ((length & 3) != 0) {
+            // A base64 string must always have a length that is divisible by 4
+            return nullptr;
+        }
+
+        const unsigned int outLength = decodedLength(length);
+        unsigned char * out = (unsigned char *) malloc(outLength + 1); // +1 for terminating '\0' byte
+
+        if (decode(b64String, length, out)) {
+            return out;
+        } else {
+            free(out);
+            return nullptr;
+        }
+    }
+
+
+    /**
+     * @param data The data to be encoded.
+     * @param length The length of the data to be encoded.
+     * @param out The string to copy the results into.
+     * @return Returns `true` on success.
+     */
+    bool encode(const void * data, size_t length, char * out) {
+        const unsigned char * in = (const unsigned char *) data;
 
         const unsigned int remaining = length % 3;
         length -= remaining;
@@ -87,27 +111,27 @@ namespace b64 {
             }
         }
 
-        return out;
+        return true;
     }
 
     /**
      * @param b64String The base64 encoded string to be decoded.
      * @param length The length of the string to be decoded.
-     * @return An array of bytes, which must be freed using `free()`.
+     * @param out The buffer to copy the results into.
+     * @return Returns `true` on success.
      */
-    void * decode(const char * b64String, size_t length) {
+    bool decode(const char * b64String, size_t length, void * out) {
         if ((length & 3) != 0) {
             // A base64 string must always have a length that is divisible by 4
-            return nullptr;
+            return false;
         }
 
-        const unsigned int outLength = decodedLength(length);
-        unsigned char * out = (unsigned char *) malloc(outLength + 1); // +1 for terminating '\0' byte
+        unsigned char * buffer = (unsigned char *) out;
 
 #define checkBounds(var)                                \
         do {                                            \
-            if (var < 0) goto decodeError;              \
-            if (atEnd && var < 64) goto decodeError;    \
+            if (var < 0) return false;                  \
+            if (atEnd && var < 64) return false;        \
             if (var >= 64) { atEnd = true; var = 0; }   \
         } while (false)
 
@@ -119,18 +143,14 @@ namespace b64 {
             unsigned char c = toInt(b64String[j + 2]); checkBounds(c);
             unsigned char d = toInt(b64String[j + 3]); checkBounds(d);
 
-            out[i++] = (a << 2) | (b >> 4);
-            out[i++] = (b << 4) | (c >> 2);
-            out[i++] = (c << 6) | (d >> 0);
+            buffer[i++] = (a << 2) | (b >> 4);
+            buffer[i++] = (b << 4) | (c >> 2);
+            buffer[i++] = (c << 6) | (d >> 0);
         }
 
 #undef checkBounds
 
-        out[i] = '\0';
-        return out;
-
-    decodeError:
-        free(out);
-        return nullptr;
+        buffer[i] = '\0';
+        return true;
     }
 }
